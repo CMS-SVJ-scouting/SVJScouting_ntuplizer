@@ -383,7 +383,7 @@ process.mmtree = cms.EDAnalyzer('ScoutingNanoAOD_fromMiniAOD',
     applyJECForAK8Scout=cms.bool(True),
     jetCorrectorHLTAK8=cms.InputTag("ak8PFHLTL2L3Corrector"),
     jetAK8ScoutPtMin=cms.double(100),
-
+    addMatrixElementInfo=cms.bool(True),
     #offline objects
     pfcandsReco=cms.InputTag("packedPFCandidates"),
     ak4pfjetsReco=cms.InputTag("slimmedJetsPuppi"),
