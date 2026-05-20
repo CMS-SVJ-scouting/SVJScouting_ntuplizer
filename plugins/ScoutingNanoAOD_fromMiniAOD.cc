@@ -3091,13 +3091,17 @@ if(runGen && doSignal && runScouting){
   for (auto genjet = genak8jetsH->begin(); genjet != genak8jetsH->end(); ++genjet) {
     int category = 0;
     double frac = 0;
-    category += checkLast(*genjet, stableDs, 1, frac);
-    category += checkFirst(*genjet, firstQd, 2);
-    category += checkFirst(*genjet, firstGd, 4);
-    category += checkFirst(*genjet, firstQdM, 8);
-    category += checkFirst(*genjet, firstQsM, 16);
-    fatjet_hvCategory.push_back(category);
-    fatjet_darkPtFrac.push_back(frac);
+    if (genjet->pt() > jetAK8PtMin){
+        if(abs(genjet->eta()) > 2.4) continue;
+        category += checkLast(*genjet, stableDs, 1, frac);
+        category += checkFirst(*genjet, firstQd, 2);
+        category += checkFirst(*genjet, firstGd, 4);
+        category += checkFirst(*genjet, firstQdM, 8);
+        category += checkFirst(*genjet, firstQsM, 16);
+        fatjet_hvCategory.push_back(category);
+        fatjet_darkPtFrac.push_back(frac);
+    }
+
   }
 
 
@@ -3106,54 +3110,59 @@ if(runGen && doSignal && runScouting){
   auto comp = [](CandPtr a, CandPtr b){ return a->pt() > b->pt(); };
   //loop over genjets
   for (auto genjet = genak8jetsH->begin(); genjet != genak8jetsH->end(); ++genjet) {
-    GenFatJet_nConstituents.push_back(genjet->numberOfDaughters());
-    int nDaus = 0;
-    std::map<CandPtr,std::vector<CandPtr>,decltype(comp)> darkHadronMap(comp);
-    for(unsigned i = 0; i < genjet->numberOfDaughters(); ++i){
-    	CandPtr dau = daughter_noexcept(*genjet,i);
-    	CandPtr darkHadron = getAncestor(DarkHadronIDs_,dau);
-    	if (darkHadron!=nullptr){
-    		darkHadronMap[darkHadron].push_back(dau);
-    		nDaus++;
-    	}
-  }
-
-	GenFatJet_nConstituentsDarkHadrons.push_back(nDaus);
-	std::vector<CLorentzVector> tmp_darkHadrons;
-	std::vector<CLorentzVector> tmp_darkHadronJets;
-	std::vector<std::vector<CLorentzVector> > tmp_darkHadronJets_constituents;
-	std::vector<std::vector<int> > tmp_darkHadronJets_ConstituentPdgid;
-	std::vector<std::vector<int> > tmpMatchStage;
-	std::vector<int> tmp_darkHadronJets_multiplicity;
-
-	for(const auto& entry : darkHadronMap){
-		tmp_darkHadrons.emplace_back(entry.first->pt(),entry.first->eta(),entry.first->phi(),entry.first->energy());
-		LorentzVector tmpjet;
-		std::vector<CLorentzVector> tmpjetconstituents;
-		std::vector<int> tmpjetconstituentspdgid;
-		for(const auto& dau : entry.second){
-			tmpjet += dau->p4();
-			tmpjetconstituents.emplace_back(dau->pt(),dau->eta(),dau->phi(),dau->energy());
-			tmpjetconstituentspdgid.emplace_back(dau->pdgId());
-		}
-		tmp_darkHadronJets.emplace_back(tmpjet.pt(),tmpjet.eta(),tmpjet.phi(),tmpjet.energy());
-		tmp_darkHadronJets_constituents.push_back(tmpjetconstituents);
-		tmp_darkHadronJets_ConstituentPdgid.push_back(tmpjetconstituentspdgid);
-		tmp_darkHadronJets_multiplicity.push_back(entry.second.size());
-		std::vector<int> tmpMatch(tmpjetconstituentspdgid.size(), -1);
-		tmpMatchStage.push_back(tmpMatch);
-	}
-	GenFatJet_darkHadrons.push_back(tmp_darkHadrons);
-	GenFatJet_darkHadronJets.push_back(tmp_darkHadronJets);
-	GenFatJet_darkHadronJets_constituents.push_back(tmp_darkHadronJets_constituents);
-	GenFatJet_darkHadronJets_constituentsPdgid.push_back(tmp_darkHadronJets_ConstituentPdgid);
-	GenFatJet_darkHadronJets_multiplicity.push_back(tmp_darkHadronJets_multiplicity);
-	GenFatJet_nConstituents_unmatched.emplace_back(-1);
-	GenFatJet_constituents_pdgid.push_back({-1});
-	GenFatJet_darkHadronJets_constituentsMatchStage.push_back(tmpMatchStage);
-  }
+    if (genjet->pt() > jetAK8PtMin){
+       if(abs(genjet->eta()) > 2.4) continue;
+       GenFatJet_nConstituents.push_back(genjet->numberOfDaughters());
+       int nDaus = 0;
+       std::map<CandPtr,std::vector<CandPtr>,decltype(comp)> darkHadronMap(comp);
+       for(unsigned i = 0; i < genjet->numberOfDaughters(); ++i){
+       	CandPtr dau = daughter_noexcept(*genjet,i);
+       	CandPtr darkHadron = getAncestor(DarkHadronIDs_,dau);
+       	if (darkHadron!=nullptr){
+       		darkHadronMap[darkHadron].push_back(dau);
+       		nDaus++;
+       	}
+    }
   
+
+  	GenFatJet_nConstituentsDarkHadrons.push_back(nDaus);
+  	std::vector<CLorentzVector> tmp_darkHadrons;
+  	std::vector<CLorentzVector> tmp_darkHadronJets;
+  	std::vector<std::vector<CLorentzVector> > tmp_darkHadronJets_constituents;
+  	std::vector<std::vector<int> > tmp_darkHadronJets_ConstituentPdgid;
+  	std::vector<std::vector<int> > tmpMatchStage;
+  	std::vector<int> tmp_darkHadronJets_multiplicity;
+  
+  	for(const auto& entry : darkHadronMap){
+  		tmp_darkHadrons.emplace_back(entry.first->pt(),entry.first->eta(),entry.first->phi(),entry.first->energy());
+  		LorentzVector tmpjet;
+  		std::vector<CLorentzVector> tmpjetconstituents;
+  		std::vector<int> tmpjetconstituentspdgid;
+  		for(const auto& dau : entry.second){
+  			tmpjet += dau->p4();
+  			tmpjetconstituents.emplace_back(dau->pt(),dau->eta(),dau->phi(),dau->energy());
+  			tmpjetconstituentspdgid.emplace_back(dau->pdgId());
+  		}
+  		tmp_darkHadronJets.emplace_back(tmpjet.pt(),tmpjet.eta(),tmpjet.phi(),tmpjet.energy());
+  		tmp_darkHadronJets_constituents.push_back(tmpjetconstituents);
+  		tmp_darkHadronJets_ConstituentPdgid.push_back(tmpjetconstituentspdgid);
+  		tmp_darkHadronJets_multiplicity.push_back(entry.second.size());
+  		std::vector<int> tmpMatch(tmpjetconstituentspdgid.size(), -1);
+  		tmpMatchStage.push_back(tmpMatch);
+  	}
+  	GenFatJet_darkHadrons.push_back(tmp_darkHadrons);
+  	GenFatJet_darkHadronJets.push_back(tmp_darkHadronJets);
+  	GenFatJet_darkHadronJets_constituents.push_back(tmp_darkHadronJets_constituents);
+  	GenFatJet_darkHadronJets_constituentsPdgid.push_back(tmp_darkHadronJets_ConstituentPdgid);
+  	GenFatJet_darkHadronJets_multiplicity.push_back(tmp_darkHadronJets_multiplicity);
+  	GenFatJet_nConstituents_unmatched.emplace_back(-1);
+  	GenFatJet_constituents_pdgid.push_back({-1});
+  	GenFatJet_darkHadronJets_constituentsMatchStage.push_back(tmpMatchStage);
   }
+
+ }
+
+}
 
 
 
@@ -3401,9 +3410,8 @@ GenFatJetdarkHadronsubJetsPFCands_genjetIdx.clear();
 GenFatJetdarkHadronsubJetsPFCands_gensubjetIdx.clear();
 GenFatJetdarkHadronsubJetsPFCands_matchStage.clear();
 //
-////loop using genak8jetsH
-for (size_t i_jet = 0; i_jet < genak8jetsH->size(); ++i_jet) {
-  
+////loop using GenFatJet_pt
+for (size_t i_jet = 0; i_jet < GenFatJet_pt.size(); ++i_jet) {
 
   for(size_t j = 0; j < GenFatJet_darkHadrons.at(i_jet).size(); ++j) {
       GenFatJetdarkHadrons_pt.push_back(GenFatJet_darkHadrons.at(i_jet)[j].pt());
