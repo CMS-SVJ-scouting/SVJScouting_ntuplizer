@@ -1915,9 +1915,10 @@ if(runOffline){
         auto chg = ele_miniiso.chargedHadronIso();
         auto neu = ele_miniiso.neutralHadronIso();
         auto pho = ele_miniiso.photonIso();
+        auto pu = ele_miniiso.puChargedHadronIso();
         float scale = 1.0 / electrons_iter->pt();
         Electron_chargedMiniIso.push_back(scale * chg);
-        Electron_combinedMiniIso.push_back(scale * (chg + std::max(0.0, static_cast<double>(neu + pho) )));
+        Electron_combinedMiniIso.push_back(scale * (chg + std::max(0.0, static_cast<double>(neu + pho) - 0.5 * pu) ));
         
     }
   }
@@ -1933,9 +1934,10 @@ if(runOffline){
         auto chg = mu_miniiso.chargedHadronIso();
         auto neu = mu_miniiso.neutralHadronIso();
         auto pho = mu_miniiso.photonIso();
+        auto pu = mu_miniiso.puChargedHadronIso();
         float scale = 1.0 / muons_iter->pt();
         Muon_chargedMiniIso.push_back(scale * chg);
-        Muon_combinedMiniIso.push_back(scale * (chg + std::max(0.0, static_cast<double>(neu + pho) )));
+        Muon_combinedMiniIso.push_back(scale * (chg + std::max(0.0, static_cast<double>(neu + pho) - 0.5 * pu) ));
         
     }
   }
