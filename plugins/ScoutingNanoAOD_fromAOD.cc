@@ -1054,8 +1054,8 @@ ScoutingNanoAOD_fromAOD::ScoutingNanoAOD_fromAOD(const edm::ParameterSet& iConfi
     
 
     //Offline AK4 PFJets
-    tree->Branch("nJet"            	        ,&n_jetoff                         ,"nOfflineJet/i");
-    tree->Branch("nJetId"            	        ,&n_jetIdoff                       ,"nOfflineJetId/i");
+    tree->Branch("nOfflineJet"            	        ,&n_jetoff                         ,"nOfflineJet/i");
+    tree->Branch("nOfflineJetId"            	        ,&n_jetIdoff                       ,"nOfflineJetId/i");
     tree->Branch("OfflineJet_pt"            	           ,&OffJet_pt                        );
     tree->Branch("OfflineJet_eta"            	           ,&OffJet_eta                       );
     tree->Branch("OfflineJet_phi"            	           ,&OffJet_phi                       );
@@ -1191,7 +1191,6 @@ ScoutingNanoAOD_fromAOD::ScoutingNanoAOD_fromAOD(const edm::ParameterSet& iConfi
     tree->Branch("OfflinePuppiFatJet_chargedEmEnergyFraction"        ,&OffPuppiFatJet_chargedEmEnergyFraction       );
     tree->Branch("OfflinePuppiFatJet_muonEnergyFraction"        ,&OffPuppiFatJet_muonEnergyFraction       );
     tree->Branch("OfflinePuppiFatJet_neutralEmEnergyFraction"        ,&OffPuppiFatJet_neutralEmEnergyFraction       );
-    tree->Branch("OfflinePuppiFatJet_muonEnergyFraction"        ,&OffPuppiFatJet_muonEnergyFraction       );
     tree->Branch("OfflinePuppiFatJet_photonEnergyFraction"        ,&OffPuppiFatJet_photonEnergyFraction       );
     tree->Branch("OfflinePuppiFatJet_nConstituents"              ,&OffPuppiFatJet_nConstituents      );
     tree->Branch("OfflinePuppiFatJet_neutralMultiplicity"        ,&OffPuppiFatJet_neutralMultiplicity       );
@@ -1576,6 +1575,9 @@ void ScoutingNanoAOD_fromAOD::analyze(const edm::Event& iEvent, const edm::Event
 
         OffElectron_d0.push_back((-1) * electronsoff_iter-> gsfTrack()->dxy(firstGoodVertex->position()));
         OffElectron_dz.push_back(electronsoff_iter -> gsfTrack()->dz( firstGoodVertex->position() ));
+        OffElectron_ecaliso.push_back(electronsoff_iter->dr03EcalRecHitSumEt());
+        OffElectron_hcaliso.push_back(electronsoff_iter->dr03HcalTowerSumEt());
+        OffElectron_trkiso.push_back(electronsoff_iter->dr03TkSumPt());
         n_ele_off++;
 
         //Notice, applying tghe same ID as for the scouting electrons for comparison
