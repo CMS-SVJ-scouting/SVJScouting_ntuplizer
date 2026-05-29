@@ -2525,11 +2525,12 @@ if(runOffline){
   }
 
       unsigned int n_pfcand_tot = 0;
+      unsigned int n_pfcand_tot_matched = 0;
       for (auto & pfcands_iter : PFcands ) {
-        fatjets_cands[n_pfcand_tot].emplace_back(pfcands_iter.pt(), pfcands_iter.eta(), pfcands_iter.phi(), pfcands_iter.m());
-        cands_pdgids[n_pfcand_tot].push_back(pfcands_iter.pdgId());
         if (pfcands_iter.pt() < 0.5) continue;
         if (abs(pfcands_iter.eta()) >= 2.4 ) continue;    
+        //fatjets_cands[n_pfcand_tot].emplace_back(pfcands_iter.pt(), pfcands_iter.eta(), pfcands_iter.phi(), pfcands_iter.m());
+        //cands_pdgids[n_pfcand_tot].push_back(pfcands_iter.pdgId());
         int tmpidx = -1;
         int ak8count = 0;
         for (auto &j: ak8_jets) {
@@ -2544,6 +2545,9 @@ if(runOffline){
           if (tmpidx>-1){
             FatJetPFCands_jetIdx.push_back(tmpidx);
             FatJetPFCands_pFCandsIdx.push_back(n_pfcand_tot);
+            fatjets_cands[n_pfcand_tot_matched].emplace_back(pfcands_iter.pt(), pfcands_iter.eta(), pfcands_iter.phi(), pfcands_iter.m());
+            cands_pdgids[n_pfcand_tot_matched].push_back(pfcands_iter.pdgId());
+            n_pfcand_tot_matched++;
             break;
           }else{
             ak8count++;
@@ -3197,22 +3201,15 @@ if(runGen && doSignal && runScouting){
         std::vector<CLorentzVector> fatjet_i_cands;
         std::vector<int> fatjet_i_cands_pdgid;
 
-        for (size_t i_cand = 0; i_cand < fatjets_cands.size(); ++i_cand) {
+        for (size_t i_cand = 0; i_cand < PFcand_pt.size(); ++i_cand) {
       
             if (FatJetPFCands_jetIdx[i_cand] != i_jet)
                 continue;
+
+            double pf_cand_energy = sqrt(pow(PFcand_pt[i_cand]*cosh(PFcand_eta[i_cand]),2) + pow(PFcand_m[i_cand],2));
+            fatjet_i_cands.push_back(CLorentzVector(PFcand_pt[i_cand], PFcand_eta[i_cand], PFcand_phi[i_cand], pf_cand_energy));
+            fatjet_i_cands_pdgid.push_back(PFcand_pdgid[i_cand]);
       
-            fatjet_i_cands.insert(
-                fatjet_i_cands.end(),
-                fatjets_cands[i_cand].begin(),
-                fatjets_cands[i_cand].end()
-            );
-      
-            fatjet_i_cands_pdgid.insert(
-                fatjet_i_cands_pdgid.end(),
-                cands_pdgids[i_cand].begin(),
-                cands_pdgids[i_cand].end()
-            );
         }
 
 
@@ -3344,12 +3341,12 @@ FatJetdarkHadronsubJetsPFCands_matchStage.clear();
 
 //
 for(size_t i_jet = 0; i_jet < FatJet_pt.size(); ++i_jet) {
-
   
   for(size_t i = 0; i < FatJet_nConstituents_unmatched_pdgid[i_jet].size(); ++i) {
     FatJet_nConstituents_unmatched_pdgid_flat.push_back(FatJet_nConstituents_unmatched_pdgid[i_jet][i]);
     FatJet_nConstituents_unmatched_jetidx_flat.push_back(i_jet);
   }
+
 
   for(size_t j = 0; j < FatJet_darkHadronJets.at(i_jet).size(); ++j) {
     FatJetdarkHadronsubJets_pt.push_back(FatJet_darkHadronJets.at(i_jet)[j].pt());
@@ -3358,6 +3355,7 @@ for(size_t i_jet = 0; i_jet < FatJet_pt.size(); ++i_jet) {
     FatJetdarkHadronsubJets_E.push_back(FatJet_darkHadronJets.at(i_jet)[j].energy());
     FatJetdarkHadronsubJets_jetIdx.push_back(i_jet);
     FatJetdarkHadronsubJets_subjetIdx.push_back(j);
+
 
     for(size_t k = 0; k < FatJet_darkHadronJets_constituents.at(i_jet)[j].size(); ++k) {
       FatJetdarkHadronsubJetsPFCands_pt.push_back(FatJet_darkHadronJets_constituents.at(i_jet)[j][k].pt());
@@ -3375,66 +3373,67 @@ for(size_t i_jet = 0; i_jet < FatJet_pt.size(); ++i_jet) {
   }
 
 }
+std::cout << "Reorganizing dark hadron jet information for tree storage... FINISHED" << std::endl;
 //
 //   
 ////gen
 
-GenFatJetdarkHadrons_pt.clear();
-GenFatJetdarkHadrons_eta.clear();
-GenFatJetdarkHadrons_phi.clear();
-GenFatJetdarkHadrons_E.clear();
-GenFatJetdarkHadrons_genjetIdx.clear();
-////
-GenFatJetdarkHadronsubJets_multiplicity.clear();
-GenFatJetdarkHadronsubJets_pt.clear();
-GenFatJetdarkHadronsubJets_eta.clear();
-GenFatJetdarkHadronsubJets_phi.clear();
-GenFatJetdarkHadronsubJets_E.clear();
-GenFatJetdarkHadronsubJets_genjetIdx.clear();
-GenFatJetdarkHadronsubJets_gensubjetIdx.clear();
-////
-GenFatJetdarkHadronsubJetsPFCands_pt.clear();
-GenFatJetdarkHadronsubJetsPFCands_eta.clear();
-GenFatJetdarkHadronsubJetsPFCands_phi.clear();
-GenFatJetdarkHadronsubJetsPFCands_E.clear();
-GenFatJetdarkHadronsubJetsPFCands_pdgid.clear();
-GenFatJetdarkHadronsubJetsPFCands_genjetIdx.clear();
-GenFatJetdarkHadronsubJetsPFCands_gensubjetIdx.clear();
-GenFatJetdarkHadronsubJetsPFCands_matchStage.clear();
+//GenFatJetdarkHadrons_pt.clear();
+//GenFatJetdarkHadrons_eta.clear();
+//GenFatJetdarkHadrons_phi.clear();
+//GenFatJetdarkHadrons_E.clear();
+//GenFatJetdarkHadrons_genjetIdx.clear();
+//////
+//GenFatJetdarkHadronsubJets_multiplicity.clear();
+//GenFatJetdarkHadronsubJets_pt.clear();
+//GenFatJetdarkHadronsubJets_eta.clear();
+//GenFatJetdarkHadronsubJets_phi.clear();
+//GenFatJetdarkHadronsubJets_E.clear();
+//GenFatJetdarkHadronsubJets_genjetIdx.clear();
+//GenFatJetdarkHadronsubJets_gensubjetIdx.clear();
+//////
+//GenFatJetdarkHadronsubJetsPFCands_pt.clear();
+//GenFatJetdarkHadronsubJetsPFCands_eta.clear();
+//GenFatJetdarkHadronsubJetsPFCands_phi.clear();
+//GenFatJetdarkHadronsubJetsPFCands_E.clear();
+//GenFatJetdarkHadronsubJetsPFCands_pdgid.clear();
+//GenFatJetdarkHadronsubJetsPFCands_genjetIdx.clear();
+//GenFatJetdarkHadronsubJetsPFCands_gensubjetIdx.clear();
+//GenFatJetdarkHadronsubJetsPFCands_matchStage.clear();
 //
 ////loop using GenFatJet_pt
-for (size_t i_jet = 0; i_jet < GenFatJet_pt.size(); ++i_jet) {
-
-  for(size_t j = 0; j < GenFatJet_darkHadrons.at(i_jet).size(); ++j) {
-      GenFatJetdarkHadrons_pt.push_back(GenFatJet_darkHadrons.at(i_jet)[j].pt());
-      GenFatJetdarkHadrons_eta.push_back(GenFatJet_darkHadrons.at(i_jet)[j].eta());
-      GenFatJetdarkHadrons_phi.push_back(GenFatJet_darkHadrons.at(i_jet)[j].phi());
-      GenFatJetdarkHadrons_E.push_back(GenFatJet_darkHadrons.at(i_jet)[j].energy());
-      GenFatJetdarkHadrons_genjetIdx.push_back(i_jet);
-  }
+//for (size_t i_jet = 0; i_jet < GenFatJet_pt.size(); ++i_jet) {
+//
+//  for(size_t j = 0; j < GenFatJet_darkHadrons.at(i_jet).size(); ++j) {
+//      GenFatJetdarkHadrons_pt.push_back(GenFatJet_darkHadrons.at(i_jet)[j].pt());
+//      GenFatJetdarkHadrons_eta.push_back(GenFatJet_darkHadrons.at(i_jet)[j].eta());
+//      GenFatJetdarkHadrons_phi.push_back(GenFatJet_darkHadrons.at(i_jet)[j].phi());
+//      GenFatJetdarkHadrons_E.push_back(GenFatJet_darkHadrons.at(i_jet)[j].energy());
+//      GenFatJetdarkHadrons_genjetIdx.push_back(i_jet);
+//  }
 //
 //
-  for(size_t j = 0; j < GenFatJet_darkHadronJets.at(i_jet).size(); ++j) {
-      GenFatJetdarkHadronsubJets_multiplicity.push_back(GenFatJet_darkHadronJets_multiplicity.at(i_jet)[j]);
-      GenFatJetdarkHadronsubJets_pt.push_back(GenFatJet_darkHadronJets.at(i_jet)[j].pt());
-      GenFatJetdarkHadronsubJets_eta.push_back(GenFatJet_darkHadronJets.at(i_jet)[j].eta());
-      GenFatJetdarkHadronsubJets_phi.push_back(GenFatJet_darkHadronJets.at(i_jet)[j].phi());
-      GenFatJetdarkHadronsubJets_E.push_back(GenFatJet_darkHadronJets.at(i_jet)[j].energy());
-      GenFatJetdarkHadronsubJets_genjetIdx.push_back(i_jet);
-      GenFatJetdarkHadronsubJets_gensubjetIdx.push_back(j);
-
-      for(size_t k = 0; k < GenFatJet_darkHadronJets_constituents.at(i_jet)[j].size(); ++k) {
-        GenFatJetdarkHadronsubJetsPFCands_pt.push_back(GenFatJet_darkHadronJets_constituents.at(i_jet)[j][k].pt());
-        GenFatJetdarkHadronsubJetsPFCands_eta.push_back(GenFatJet_darkHadronJets_constituents.at(i_jet)[j][k].eta());
-        GenFatJetdarkHadronsubJetsPFCands_phi.push_back(GenFatJet_darkHadronJets_constituents.at(i_jet)[j][k].phi());
-        GenFatJetdarkHadronsubJetsPFCands_E.push_back(GenFatJet_darkHadronJets_constituents.at(i_jet)[j][k].energy());
-        GenFatJetdarkHadronsubJetsPFCands_genjetIdx.push_back(i_jet);
-        GenFatJetdarkHadronsubJetsPFCands_gensubjetIdx.push_back(j);
-        GenFatJetdarkHadronsubJetsPFCands_pdgid.push_back(GenFatJet_darkHadronJets_constituentsPdgid.at(i_jet)[j][k]);
-        GenFatJetdarkHadronsubJetsPFCands_matchStage.push_back(GenFatJet_darkHadronJets_constituentsMatchStage.at(i_jet)[j][k]);
-      }
-  }
-}
+//  for(size_t j = 0; j < GenFatJet_darkHadronJets.at(i_jet).size(); ++j) {
+//      GenFatJetdarkHadronsubJets_multiplicity.push_back(GenFatJet_darkHadronJets_multiplicity.at(i_jet)[j]);
+//      GenFatJetdarkHadronsubJets_pt.push_back(GenFatJet_darkHadronJets.at(i_jet)[j].pt());
+//      GenFatJetdarkHadronsubJets_eta.push_back(GenFatJet_darkHadronJets.at(i_jet)[j].eta());
+//      GenFatJetdarkHadronsubJets_phi.push_back(GenFatJet_darkHadronJets.at(i_jet)[j].phi());
+//      GenFatJetdarkHadronsubJets_E.push_back(GenFatJet_darkHadronJets.at(i_jet)[j].energy());
+//      GenFatJetdarkHadronsubJets_genjetIdx.push_back(i_jet);
+//      GenFatJetdarkHadronsubJets_gensubjetIdx.push_back(j);
+//
+//      for(size_t k = 0; k < GenFatJet_darkHadronJets_constituents.at(i_jet)[j].size(); ++k) {
+//        GenFatJetdarkHadronsubJetsPFCands_pt.push_back(GenFatJet_darkHadronJets_constituents.at(i_jet)[j][k].pt());
+//        GenFatJetdarkHadronsubJetsPFCands_eta.push_back(GenFatJet_darkHadronJets_constituents.at(i_jet)[j][k].eta());
+//        GenFatJetdarkHadronsubJetsPFCands_phi.push_back(GenFatJet_darkHadronJets_constituents.at(i_jet)[j][k].phi());
+//        GenFatJetdarkHadronsubJetsPFCands_E.push_back(GenFatJet_darkHadronJets_constituents.at(i_jet)[j][k].energy());
+//        GenFatJetdarkHadronsubJetsPFCands_genjetIdx.push_back(i_jet);
+//        GenFatJetdarkHadronsubJetsPFCands_gensubjetIdx.push_back(j);
+//        GenFatJetdarkHadronsubJetsPFCands_pdgid.push_back(GenFatJet_darkHadronJets_constituentsPdgid.at(i_jet)[j][k]);
+//        GenFatJetdarkHadronsubJetsPFCands_matchStage.push_back(GenFatJet_darkHadronJets_constituentsMatchStage.at(i_jet)[j][k]);
+//      }
+//  }
+//}
 
 
 
