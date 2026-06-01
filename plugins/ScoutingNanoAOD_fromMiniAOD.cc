@@ -1177,8 +1177,8 @@ ScoutingNanoAOD_fromMiniAOD::ScoutingNanoAOD_fromMiniAOD(const edm::ParameterSet
 
 
   //Offline AK4 PFJets
-  tree->Branch("nJet"            	        ,&n_jetoff                         ,"nOfflineJet/i");
-  tree->Branch("nJetId"            	        ,&n_jetIdoff                       ,"nOfflineJetId/i");
+  tree->Branch("nOfflineJet"            	        ,&n_jetoff                         ,"nOfflineJet/i");
+  tree->Branch("nOfflineJetId"            	        ,&n_jetIdoff                       ,"nOfflineJetId/i");
   tree->Branch("OfflineJet_pt"            	           ,&OffJet_pt                        );
   tree->Branch("OfflineJet_eta"            	           ,&OffJet_eta                       );
   tree->Branch("OfflineJet_phi"            	           ,&OffJet_phi                       );
@@ -1271,7 +1271,6 @@ ScoutingNanoAOD_fromMiniAOD::ScoutingNanoAOD_fromMiniAOD(const edm::ParameterSet
   tree->Branch("OfflineFatJet_chargedEmEnergyFraction"        ,&OffPuppiFatJet_chargedEmEnergyFraction       );
   tree->Branch("OfflineFatJet_muonEnergyFraction"        ,&OffPuppiFatJet_muonEnergyFraction       );
   tree->Branch("OfflineFatJet_neutralEmEnergyFraction"        ,&OffPuppiFatJet_neutralEmEnergyFraction       );
-  tree->Branch("OfflineFatJet_muonEnergyFraction"        ,&OffPuppiFatJet_muonEnergyFraction       );
   tree->Branch("OfflineFatJet_photonEnergyFraction"        ,&OffPuppiFatJet_photonEnergyFraction       );
   tree->Branch("OfflineFatJet_nConstituents"              ,&OffPuppiFatJet_nConstituents      );
   tree->Branch("OfflineFatJet_neutralMultiplicity"        ,&OffPuppiFatJet_neutralMultiplicity       );
@@ -1743,10 +1742,10 @@ void ScoutingNanoAOD_fromMiniAOD::analyze(const edm::Event& iEvent, const edm::E
             OffElectron_HoE.push_back(electronsoff_iter->hcalOverEcal());	
           
             if( electronsoff_iter -> ecalEnergy() == 0 ){
-              printf("Electron energy is zero!\n");
+              printf("Offline Electron energy is zero!\n");
               ooEmooP_ = 1e30;
             }else if( !std::isfinite(electronsoff_iter -> ecalEnergy())){
-              printf("Electron energy is not finite!\n");
+              printf("Offline Electron energy is not finite!\n");
               ooEmooP_ = 1e30;
             }else{
               ooEmooP_ = std::abs(1.0/electronsoff_iter -> ecalEnergy() - electronsoff_iter -> eSuperClusterOverP()/electronsoff_iter -> ecalEnergy() );
@@ -1761,6 +1760,9 @@ void ScoutingNanoAOD_fromMiniAOD::analyze(const edm::Event& iEvent, const edm::E
 
             OffElectron_d0.push_back((-1) * electronsoff_iter-> gsfTrack()->dxy(firstGoodVertex->position()));
             OffElectron_dz.push_back(electronsoff_iter -> gsfTrack()->dz( firstGoodVertex->position() ));
+            OffElectron_ecaliso.push_back(electronsoff_iter->dr03EcalRecHitSumEt());
+            OffElectron_hcaliso.push_back(electronsoff_iter->dr03HcalTowerSumEt());
+            OffElectron_trkiso.push_back(electronsoff_iter->dr03TkSumPt());
             n_ele_off++;
 
             //Notice, applying tghe same ID as for the scouting electrons for comparison
