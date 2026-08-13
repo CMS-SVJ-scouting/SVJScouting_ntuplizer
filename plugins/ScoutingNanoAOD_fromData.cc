@@ -226,6 +226,7 @@ private:
   std::vector<std::string>     hltResultName_;
 
   UInt_t scouting_trig; 
+  UInt_t ref_trig; 
 
   
   //Photon
@@ -462,6 +463,7 @@ ScoutingNanoAOD_fromData::ScoutingNanoAOD_fromData(const edm::ParameterSet& iCon
   
   //scouting, offline triggers
   tree->Branch("scouting_trig"            	        ,&scouting_trig 			,"scouting_trig/i");
+  tree->Branch("ref_trig"            	        ,&ref_trig 			,"ref_trig/i");
 
   //Scouting Electrons
   tree->Branch("nElectron"               	         ,&n_ele                        ,"nElectron/i");
@@ -678,6 +680,7 @@ void ScoutingNanoAOD_fromData::analyze(const edm::Event& iEvent, const edm::Even
     runScouting = true;
   }
 
+
   if(runScouting){
     iEvent.getByToken(electronsToken, electronsH);
     iEvent.getByToken(muonsToken, muonsH);
@@ -703,9 +706,11 @@ void ScoutingNanoAOD_fromData::analyze(const edm::Event& iEvent, const edm::Even
 
   const edm::TriggerNames &names = iEvent.triggerNames(*triggerBits);
   scouting_trig=0; 
+  ref_trig=0;
   for(size_t j = 0; j < hltSeeds_.size(); j++){
         TPRegexp pattern(hltSeeds_[j]);
         TPRegexp pattern1("DST_HT410_PFScouting_v");
+        TPRegexp pattern2("DST_DoubleMu3_noVtx_CaloScouting_v*");
     for (unsigned int i = 0, n = triggerBits->size(); i < n; ++i) {                                                          
       const std::string& hltbitName = names.triggerName(i);
       std::string hltpathName = hltbitName;
@@ -715,6 +720,10 @@ void ScoutingNanoAOD_fromData::analyze(const edm::Event& iEvent, const edm::Even
           {
           scouting_trig=1;
           }  
+          if( TString(hltpathName).Contains(pattern2) and hltpassFinal)
+          {
+          ref_trig=1;
+          }
       }
   }
 
