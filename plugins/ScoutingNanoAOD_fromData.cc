@@ -193,6 +193,7 @@ private:
 
   const edm::EDGetTokenT<double> metPtToken;
   const edm::EDGetTokenT<double> metPhiToken;
+  const edm::EDGetTokenT<double>  	rhoToken2;
 
   double jetAK4ScoutPtMin = 0.;
   double jetAK8ScoutPtMin = 0.;
@@ -225,6 +226,7 @@ private:
   std::vector<std::string>     hltResultName_;
 
   UInt_t scouting_trig; 
+  UInt_t ref_trig; 
 
   
   //Photon
@@ -344,6 +346,7 @@ private:
   vector<Float16_t>            CorrT1METJet_eta;
   vector<Float16_t>            CorrT1METJet_phi;
   vector<Float16_t>            CorrT1METJet_mass;
+  vector<Float16_t>            CorrT1METJet_area;
 
   // Scouting PFCand
   UInt_t                       n_pfcand;
@@ -403,6 +406,7 @@ private:
 
   //Scouting MET
   double met_pt, met_phi;
+  float                        rho2;
   
   //reco vertices
   Int_t nPV_;        // number of reconsrtucted primary vertices
@@ -428,6 +432,7 @@ ScoutingNanoAOD_fromData::ScoutingNanoAOD_fromData(const edm::ParameterSet& iCon
   verticesToken            (consumes<std::vector<ScoutingVertex> >           (iConfig.getParameter<edm::InputTag>("vertices"))),
   metPtToken               (consumes<double>                                 (iConfig.getParameter<edm::InputTag>("metPt"))),
   metPhiToken              (consumes<double>                                 (iConfig.getParameter<edm::InputTag>("metPhi"))),
+  rhoToken2                (consumes<double>                                 (iConfig.getParameter<edm::InputTag>("rho2"))),
 
   jetAK4ScoutPtMin         (iConfig.getParameter<double>("jetAK4ScoutPtMin")),
   jetAK8ScoutPtMin         (iConfig.getParameter<double>("jetAK8ScoutPtMin")),
@@ -458,6 +463,7 @@ ScoutingNanoAOD_fromData::ScoutingNanoAOD_fromData(const edm::ParameterSet& iCon
   
   //scouting, offline triggers
   tree->Branch("scouting_trig"            	        ,&scouting_trig 			,"scouting_trig/i");
+  tree->Branch("ref_trig"            	        ,&ref_trig 			,"ref_trig/i");
 
   //Scouting Electrons
   tree->Branch("nElectron"               	         ,&n_ele                        ,"nElectron/i");
@@ -572,6 +578,7 @@ ScoutingNanoAOD_fromData::ScoutingNanoAOD_fromData(const edm::ParameterSet& iCon
   tree->Branch("CorrT1METJet_eta"              ,&CorrT1METJet_eta              );
   tree->Branch("CorrT1METJet_phi"              ,&CorrT1METJet_phi              );
   tree->Branch("CorrT1METJet_mass"             ,&CorrT1METJet_mass             );
+  tree->Branch("CorrT1METJet_area"             ,&CorrT1METJet_area             );
 
   //Scouting AK8 PFJets
   tree->Branch("nFatJet"                        ,&n_fatjet                      ,"nFatJet/i");
@@ -637,6 +644,7 @@ ScoutingNanoAOD_fromData::ScoutingNanoAOD_fromData(const edm::ParameterSet& iCon
   //CZZ: added MET collections
   tree->Branch("ScoutMET_pt",&met_pt);
   tree->Branch("ScoutMET_phi",&met_phi);
+  tree->Branch("rho"                            ,&rho2                           );
 
 }
 
@@ -672,6 +680,7 @@ void ScoutingNanoAOD_fromData::analyze(const edm::Event& iEvent, const edm::Even
     runScouting = true;
   }
 
+
   if(runScouting){
     iEvent.getByToken(electronsToken, electronsH);
     iEvent.getByToken(muonsToken, muonsH);
@@ -697,9 +706,11 @@ void ScoutingNanoAOD_fromData::analyze(const edm::Event& iEvent, const edm::Even
 
   const edm::TriggerNames &names = iEvent.triggerNames(*triggerBits);
   scouting_trig=0; 
+  ref_trig=0;
   for(size_t j = 0; j < hltSeeds_.size(); j++){
         TPRegexp pattern(hltSeeds_[j]);
         TPRegexp pattern1("DST_HT410_PFScouting_v");
+        TPRegexp pattern2("DST_DoubleMu3_noVtx_CaloScouting_v*");
     for (unsigned int i = 0, n = triggerBits->size(); i < n; ++i) {                                                          
       const std::string& hltbitName = names.triggerName(i);
       std::string hltpathName = hltbitName;
@@ -709,6 +720,10 @@ void ScoutingNanoAOD_fromData::analyze(const edm::Event& iEvent, const edm::Even
           {
           scouting_trig=1;
           }  
+          if( TString(hltpathName).Contains(pattern2) and hltpassFinal)
+          {
+          ref_trig=1;
+          }
       }
   }
 
@@ -1055,9 +1070,10 @@ void ScoutingNanoAOD_fromData::analyze(const edm::Event& iEvent, const edm::Even
         auto chg = ele_miniiso.chargedHadronIso();
         auto neu = ele_miniiso.neutralHadronIso();
         auto pho = ele_miniiso.photonIso();
+        auto pu  = ele_miniiso.puChargedHadronIso();
         float scale = 1.0 / electrons_iter->pt();
         Electron_chargedMiniIso.push_back(scale * chg);
-        Electron_combinedMiniIso.push_back(scale * (chg + std::max(0.0, static_cast<double>(neu + pho) )));
+        Electron_combinedMiniIso.push_back(scale * (chg + std::max(0.0, static_cast<double>(neu + pho) - 0.5 * pu)));
         
     }
   }
@@ -1073,9 +1089,10 @@ void ScoutingNanoAOD_fromData::analyze(const edm::Event& iEvent, const edm::Even
         auto chg = mu_miniiso.chargedHadronIso();
         auto neu = mu_miniiso.neutralHadronIso();
         auto pho = mu_miniiso.photonIso();
+        auto pu  = mu_miniiso.puChargedHadronIso();
         float scale = 1.0 / muons_iter->pt();
         Muon_chargedMiniIso.push_back(scale * chg);
-        Muon_combinedMiniIso.push_back(scale * (chg + std::max(0.0, static_cast<double>(neu + pho) )));
+        Muon_combinedMiniIso.push_back(scale * (chg + std::max(0.0, static_cast<double>(neu + pho) - 0.5 * pu)));
         
     }
   }
@@ -1122,6 +1139,7 @@ void ScoutingNanoAOD_fromData::analyze(const edm::Event& iEvent, const edm::Even
   CorrT1METJet_eta.clear();
   CorrT1METJet_phi.clear();
   CorrT1METJet_mass.clear();
+  CorrT1METJet_area.clear();
   n_jet = 0;
   n_jetId = 0;
   ht = 0;
@@ -1200,6 +1218,7 @@ void ScoutingNanoAOD_fromData::analyze(const edm::Event& iEvent, const edm::Even
           CorrT1METJet_eta .push_back(correctedJetP4.eta() );
           CorrT1METJet_phi .push_back(correctedJetP4.phi() );
           CorrT1METJet_mass.push_back(correctedJetP4.mass());
+          CorrT1METJet_area.push_back(pfjet->jetArea()     );
         }
 
       }
@@ -1371,6 +1390,14 @@ void ScoutingNanoAOD_fromData::analyze(const edm::Event& iEvent, const edm::Even
     met_pt = *metPt;
     met_phi = *metPhi;
   }
+
+//  Handle<double> rhoH;
+  Handle<double> rhoH2;
+  if(runScouting){
+    iEvent.getByToken(rhoToken2, rhoH2);
+    rho2 = *rhoH2;
+  }else{// rho=0;
+    rho2=0;}
 
   tree->Fill();	
 
