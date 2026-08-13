@@ -274,6 +274,7 @@ private:
   UInt_t scouting_trig_zero_bias;
   UInt_t offline_trig; 
   UInt_t veto_trig;
+  UInt_t ref_trig;
 
 
   //Photon
@@ -810,6 +811,7 @@ ScoutingNanoAOD_fromAOD::ScoutingNanoAOD_fromAOD(const edm::ParameterSet& iConfi
   //scouting, offline triggers
   tree->Branch("scouting_trig_prescaled"            	         ,&scouting_trig_prescaled 			,"scouting_trig_prescaled/i");
   tree->Branch("scouting_trig"            	                   ,&scouting_trig 			,"scouting_trig/i");
+  tree->Branch("ref_trig"            	                   ,&ref_trig 			,"ref_trig/i");
   tree->Branch("scouting_trig_zero_bias"            	        ,&scouting_trig_zero_bias 			,"scouting_trig_zero_bias/i");
   tree->Branch("offline_trig"            	        ,&offline_trig 			,"offline_trig/i");
   tree->Branch("veto_trig"            	        ,&veto_trig 			,"veto_trig/i");
@@ -1348,7 +1350,8 @@ void ScoutingNanoAOD_fromAOD::analyze(const edm::Event& iEvent, const edm::Event
   scouting_trig_prescaled=0;
   scouting_trig_zero_bias=0;
   offline_trig=0; 
-  veto_trig=0; 
+  veto_trig=0;
+  ref_trig=0; 
   for(size_t j = 0; j < hltSeeds_.size(); j++){
         TPRegexp pattern(hltSeeds_[j]);
         TPRegexp pattern1("DST_HT410_PFScouting_v");
@@ -1359,6 +1362,7 @@ void ScoutingNanoAOD_fromAOD::analyze(const edm::Event& iEvent, const edm::Event
         TPRegexp pattern6("HLT_PFHT1050_v*");
         TPRegexp pattern7("DST_L1HTT_CaloScouting_PFScouting_v");
         TPRegexp pattern8("DST_CaloJet40_CaloScouting_PFScouting_v*");
+        TPRegexp pattern9("DST_DoubleMu3_noVtx_CaloScouting_v*");
     for (unsigned int i = 0, n = triggerBits->size(); i < n; ++i) {
       const std::string& hltbitName = names.triggerName(i);
       std::string hltpathName = hltbitName;
@@ -1384,6 +1388,11 @@ void ScoutingNanoAOD_fromAOD::analyze(const edm::Event& iEvent, const edm::Event
           TString(hltpathName).Contains(pattern6) and hltpassFinal)
           {
           offline_trig=1;
+          }
+        if( 
+          TString(hltpathName).Contains(pattern9) and hltpassFinal)
+          {
+          ref_trig=1;
           }
         if( hltpassFinal and (
           TString(hltpathName).Contains(pattern2)
